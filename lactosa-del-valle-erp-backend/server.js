@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./config/db');
 const employeeRoutes = require('./routes/employees');
+const attendanceRoutes = require('./routes/attendance');
+const payrollRoutes = require('./routes/payroll');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -12,6 +14,9 @@ app.use(express.json());
 
 // Routes
 app.use('/api/employees', employeeRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/benefits', require('./routes/benefits'));
+app.use('/api/payroll', payrollRoutes);
 
 // Test database connection
 db.query('SELECT 1')

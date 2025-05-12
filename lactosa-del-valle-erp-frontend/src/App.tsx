@@ -1,6 +1,6 @@
 import { Routes, Route, Link } from 'react-router-dom';
 import Home from './pages/Home';
-import Employees from './pages/Employees';
+import RRHH from './pages/RRHH';
 
 function App() {
   return (
@@ -14,7 +14,7 @@ function App() {
                 <Link to="/" className="hover:underline">Home</Link>
               </li>
               <li>
-                <Link to="/employees" className="hover:underline">Employees</Link>
+                <Link to="/rrhh" className="hover:underline">RRHH</Link>
               </li>
             </ul>
           </nav>
@@ -23,7 +23,7 @@ function App() {
       <main className="p-6">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/employees" element={<Employees />} />
+          <Route path="/rrhh" element={<RRHH />} />
         </Routes>
       </main>
     </div>
@@ -31,4 +31,3 @@ function App() {
 }
 
 export default App;
-
