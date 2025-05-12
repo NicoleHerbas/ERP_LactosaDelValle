@@ -5,6 +5,9 @@ const employeeRoutes = require('./routes/employees');
 const productionRoutes = require('./routes/production');
 const inventarioRoutes = require('./routes/inventario');
 const direccionRoutes = require('./routes/direccion');
+const attendanceRoutes = require('./routes/attendance');
+const payrollRoutes = require('./routes/payroll');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -13,10 +16,8 @@ app.use(express.json());
 
 // Rutas
 app.use('/api/employees', employeeRoutes);
-app.use('/api/production', productionRoutes);
-app.use('/api/inventario', inventarioRoutes);
-app.use('/api/direccion', direccionRoutes);
-// Verifica conexión DB
+
+// Test database connection
 db.query('SELECT 1')
   .then(() => console.log('Conectado a MySQL'))
   .catch(err => console.error('Fallo en la conexión a la BD:', err));

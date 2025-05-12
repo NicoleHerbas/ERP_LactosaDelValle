@@ -18,3 +18,13 @@ export const ejecutarOrden = (data: { product: string; quantity: number }) =>
 export const consultarStock = (product: string) =>
   api.get(`/stock/${product}`);
 
+
+export const fetchAttendance = async () => {
+  const response = await axios.get('/api/attendance');
+  return response.data;
+};
+
+export const fetchPayroll = async () => {
+  const response = await axios.get('/api/payroll');
+  return response.data;
+};

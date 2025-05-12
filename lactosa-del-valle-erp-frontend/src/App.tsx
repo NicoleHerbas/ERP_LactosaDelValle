@@ -1,6 +1,6 @@
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import Home from './pages/Home';
-import Employees from './pages/Employees';
+import RRHH from './pages/RRHH';
 import Production from './pages/Production';
 import Ordenes from './pages/Ordenes';
 import Compras from './pages/Compras';
@@ -45,6 +45,7 @@ function App() {
                   <option value="/compras">Compras</option>
                   <option value="/control-calidad">Control Calidad</option>
                   <option value="/dashboard">Dashboard</option>
+                  <option value="/rrhh">RRHH</option>
                 </select>
               </li>
             </ul>
@@ -55,7 +56,7 @@ function App() {
       <main className="p-6">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/employees" element={<Employees />} />
+          <Route path="/rrhh" element={<RRHH />} />
           <Route path="/inventario" element={<Inventario />} />
           <Route path="/ordenes" element={<Ordenes />} />
           <Route path="/compras" element={<Compras />} />
