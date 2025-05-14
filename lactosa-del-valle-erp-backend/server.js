@@ -4,28 +4,31 @@ const db = require('./config/db');
 const employeeRoutes = require('./routes/employees');
 const attendanceRoutes = require('./routes/attendance');
 const payrollRoutes = require('./routes/payroll');
-
+const productionRoutes = require('./routes/production');
+const inventarioRoutes = require('./routes/inventario');
+const direccionRoutes = require('./routes/direccion');
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3001;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// Rutas
 app.use('/api/employees', employeeRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/benefits', require('./routes/benefits'));
 app.use('/api/payroll', payrollRoutes);
 app.use('/api/performance', require('./routes/performance'));
 
-
-// Test database connection
+app.use('/api/production', productionRoutes);
+app.use('/api/inventario', inventarioRoutes);
+app.use('/api/direccion', direccionRoutes);
+// Verifica conexión DB
 db.query('SELECT 1')
-  .then(() => console.log('Connected to MySQL database'))
-  .catch(err => console.error('Database connection failed:', err));
+  .then(() => console.log('Conectado a MySQL'))
+  .catch(err => console.error('Fallo en la conexión a la BD:', err));
 
-// Start server
+// Inicia servidor
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Servidor backend corriendo en puerto ${PORT}`);
 });
