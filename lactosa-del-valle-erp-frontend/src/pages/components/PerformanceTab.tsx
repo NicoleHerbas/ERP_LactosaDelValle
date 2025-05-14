@@ -1,13 +1,31 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Bar } from 'react-chartjs-2';
+import Papa from 'papaparse';
+import { saveAs } from 'file-saver';
+import {
+  Chart as ChartJS,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 interface Employee {
   id_empleado: number;
   nombre: string;
   apellido: string;
   salario: number;
-  fecha_contratacion: string;
-  fechaRegistro: string;
-  fechaActualizacion: string;
+  estado: number;
+}
+
+interface Attendance {
+  id_empleado: number;
+  fecha: string;
+  hora_entrada: string;
+  hora_salida: string;
   estado: number;
 }
 
@@ -17,82 +35,190 @@ interface Performance {
   fecha_evaluacion: string;
   calificacion: number;
   comentarios: string;
-  estado: number;
+  nombre?: string;
+  apellido?: string;
 }
 
-interface PerformanceTabProps {
+interface Props {
   employees: Employee[];
-  attendance: any[]; // Adjust based on actual attendance data
-  performance: Performance[];
-  setPerformance: React.Dispatch<React.SetStateAction<Performance[]>>;
-  setError: (error: string | null) => void;
+  attendance: Attendance[];
+  setError: (msg: string | null) => void;
 }
 
-const PerformanceTab: React.FC<PerformanceTabProps> = ({ employees, attendance, performance, setPerformance, setError }) => {
-  const calculateAttendanceScore = (empId: number) => {
-    const daysWorked = attendance.filter(a => a.id_empleado === empId && a.estado === 1).length / 2; // Two shifts per day
-    const daysWithFullHours = attendance.filter(a => a.id_empleado === empId && calculateWorkedHours(a.hora_entrada, a.hora_salida) >= 4).length / 2; // At least 4 hours per shift
-    return daysWorked > 0 ? (daysWithFullHours / daysWorked) * 100 : 0;
+const PerformanceTab: React.FC<Props> = ({ employees, attendance, setError }) => {
+  const [evaluaciones, setEvaluaciones] = useState<Performance[]>([]);
+
+  const expectedWorkingDays = 22;
+  const expectedHours = expectedWorkingDays * 8;
+
+  const calculateWorkedHours = (entrada: string, salida: string): number => {
+    const entradaDate = new Date(`1970-01-01T${entrada}`);
+    const salidaDate = new Date(`1970-01-01T${salida}`);
+    let diff = salidaDate.getTime() - entradaDate.getTime();
+    if (diff < 0) diff += 24 * 60 * 60 * 1000;
+    return +(diff / (1000 * 60 * 60)).toFixed(2);
   };
 
-  const calculateWorkedHours = (hora_entrada: string, hora_salida: string): number => {
-    const entrada = hora_entrada.split(':').slice(0, 2).join(':');
-    const salida = hora_salida.split(':').slice(0, 2).join(':');
-    const entradaDate = new Date(`1970-01-01T${entrada}:00`);
-    const salidaDate = new Date(`1970-01-01T${salida}:00`);
-    let timeDiffMs = salidaDate.getTime() - entradaDate.getTime();
-    if (timeDiffMs < 0) timeDiffMs += 24 * 60 * 60 * 1000;
-    return Number.isFinite(timeDiffMs / (1000 * 60 * 60)) ? Number((timeDiffMs / (1000 * 60 * 60)).toFixed(2)) : 0;
+  const calculatePerformanceScore = (id_empleado: number): number => {
+    const registros = attendance.filter(a => a.id_empleado === id_empleado && a.estado === 1);
+    const totalHoras = registros.reduce((sum, a) => sum + calculateWorkedHours(a.hora_entrada, a.hora_salida), 0);
+    const porcentaje = totalHoras / expectedHours * 100;
+    return Math.min(100, Math.max(0, +porcentaje.toFixed(2)));
   };
 
-  const handlePerformanceSubmit = async (e: React.FormEvent, empId: number) => {
+  const getComentario = (score: number) => {
+    return score >= 90 ? 'Excelente asistencia' :
+           score >= 75 ? 'Buena asistencia' :
+           score >= 50 ? 'Regular' : 'Deficiente';
+  };
+
+  const handleEvaluar = async (e: React.FormEvent, empleado: Employee) => {
     e.preventDefault();
-    const score = calculateAttendanceScore(empId);
-    const newPerformance = {
-      id_evaluacion: performance.length + 1,
-      id_empleado: empId,
+    const score = calculatePerformanceScore(empleado.id_empleado);
+    const nuevaEvaluacion: Omit<Performance, 'id_evaluacion'> = {
+      id_empleado: empleado.id_empleado,
       fecha_evaluacion: new Date().toISOString().split('T')[0],
       calificacion: score,
-      comentarios: score >= 80 ? 'Good attendance' : 'Needs improvement',
-      estado: 1,
+      comentarios: getComentario(score),
     };
-    setPerformance([...performance, newPerformance]);
-    // Simulate backend save (replace with actual API call)
-    console.log('Performance saved:', newPerformance);
+
+    try {
+      const res = await fetch('http://localhost:5000/api/performance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevaEvaluacion)
+      });
+
+      if (!res.ok) throw new Error("Error al guardar evaluación");
+      await fetchEvaluaciones();
+    } catch (err) {
+      setError('Error al evaluar desempeño');
+    }
   };
+
+  const fetchEvaluaciones = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/performance');
+      const data = await res.json();
+      setEvaluaciones(data);
+    } catch (err) {
+      setError("No se pudo cargar historial");
+    }
+  };
+
+  useEffect(() => {
+    fetchEvaluaciones();
+  }, []);
+
+  const exportCSV = () => {
+    const csv = Papa.unparse(evaluaciones.map(e => ({
+      Empleado: `${e.nombre} ${e.apellido}`,
+      Fecha: e.fecha_evaluacion,
+      Calificación: e.calificacion,
+      Comentarios: e.comentarios
+    })));
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, 'evaluaciones.csv');
+  };
+
+  // Datos para gráfico
+  const graficoData = {
+    labels: [...new Set(evaluaciones.map(e => `${e.nombre} ${e.apellido}`))],
+    datasets: [{
+      label: 'Promedio de Desempeño (%)',
+      data: evaluaciones.reduce((acc, e) => {
+        const key = `${e.nombre} ${e.apellido}`;
+        acc[key] = acc[key] ? [...acc[key], e.calificacion] : [e.calificacion];
+        return acc;
+      }, {} as Record<string, number[]>),
+    }]
+  };
+
+  // Convertir los datos a promedio por empleado
+  graficoData.datasets[0].data = Object.values(graficoData.datasets[0].data).map(arr => (
+    +(arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2)
+  ));
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-2">Evaluaciones de Desempeño</h2>
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-300">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="py-2 px-4 border-b text-left">Empleado</th>
-              <th className="py-2 px-4 border-b text-left">Calificación (%)</th>
-              <th className="py-2 px-4 border-b text-left">Comentarios</th>
-              <th className="py-2 px-4 border-b text-left">Acciones</th>
+      <h2 className="text-xl font-bold mb-4">Evaluaciones de Desempeño</h2>
+
+      <h3 className="text-lg font-semibold">Evaluar Asistencia</h3>
+      <table className="min-w-full border mt-2 mb-6">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="py-2 px-4 border">Empleado</th>
+            <th className="py-2 px-4 border">Calificación (%)</th>
+            <th className="py-2 px-4 border">Comentarios</th>
+            <th className="py-2 px-4 border">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          {employees.map(emp => {
+            const score = calculatePerformanceScore(emp.id_empleado);
+            return (
+              <tr key={emp.id_empleado}>
+                <td className="py-2 px-4 border">{emp.nombre} {emp.apellido}</td>
+                <td className="py-2 px-4 border">{score.toFixed(2)}</td>
+                <td className="py-2 px-4 border">{getComentario(score)}</td>
+                <td className="py-2 px-4 border">
+                  <button onClick={(e) => handleEvaluar(e, emp)} className="bg-blue-500 text-white px-2 py-1 rounded">
+                    Evaluar
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      <h3 className="text-lg font-semibold">Historial de Evaluaciones</h3>
+      <button onClick={exportCSV} className="mb-2 bg-green-600 text-white px-3 py-1 rounded">
+        Descargar CSV
+      </button>
+      <table className="min-w-full border mb-6">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="py-2 px-4 border">Empleado</th>
+            <th className="py-2 px-4 border">Fecha</th>
+            <th className="py-2 px-4 border">Calificación</th>
+            <th className="py-2 px-4 border">Comentario</th>
+          </tr>
+        </thead>
+        <tbody>
+          {evaluaciones.map(e => (
+            <tr key={e.id_evaluacion}>
+              <td className="py-2 px-4 border">{e.nombre} {e.apellido}</td>
+              <td className="py-2 px-4 border">{e.fecha_evaluacion}</td>
+              <td className="py-2 px-4 border">{e.calificacion.toFixed(2)}%</td>
+              <td className="py-2 px-4 border">{e.comentarios}</td>
             </tr>
-          </thead>
-          <tbody>
-            {employees.map((emp) => {
-              const score = calculateAttendanceScore(emp.id_empleado);
-              return (
-                <tr key={emp.id_empleado} className="hover:bg-gray-50">
-                  <td className="py-2 px-4 border-b">{emp.nombre} {emp.apellido}</td>
-                  <td className="py-2 px-4 border-b">{score.toFixed(2)}</td>
-                  <td className="py-2 px-4 border-b">{score >= 80 ? 'Good attendance' : 'Needs improvement'}</td>
-                  <td className="py-2 px-4 border-b">
-                    <button onClick={(e) => handlePerformanceSubmit(e, emp.id_empleado)} className="bg-blue-500 text-white p-1">
-                      Evaluar
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
+
+      <h3 className="text-lg font-semibold mb-2">Promedio por Empleado</h3>
+      <Bar
+        data={{
+          labels: graficoData.labels,
+          datasets: [{
+            label: 'Promedio de Desempeño (%)',
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1,
+            data: graficoData.datasets[0].data
+          }]
+        }}
+        options={{
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100
+            }
+          }
+        }}
+      />
     </div>
   );
 };

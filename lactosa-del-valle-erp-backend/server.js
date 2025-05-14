@@ -17,6 +17,8 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/benefits', require('./routes/benefits'));
 app.use('/api/payroll', payrollRoutes);
+app.use('/api/performance', require('./routes/performance'));
+
 
 // Test database connection
 db.query('SELECT 1')

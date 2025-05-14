@@ -42,18 +42,27 @@ const getPayrollById = async (req, res) => {
 
 const createPayroll = async (req, res) => {
   try {
-    const { id_empleado, fecha, salario_bruto, deducciones, salario_neto } = req.body;
+    const { id_empleado, fecha, deducciones } = req.body;
+
+    // Obtener salario del empleado
+    const [empleadoRows] = await db.query('SELECT salario FROM empleados WHERE id_empleado = ?', [id_empleado]);
+    if (empleadoRows.length === 0) return res.status(404).json({ error: 'Empleado no encontrado' });
+
+    const salario_bruto = Number(empleadoRows[0].salario);
+    const salario_neto = salario_bruto - Number(deducciones || 0);
+
     const [result] = await db.query(
       'INSERT INTO nominas (id_empleado, fecha, salario_bruto, deducciones, salario_neto, estado) VALUES (?, ?, ?, ?, ?, 1)',
       [id_empleado, fecha, salario_bruto, deducciones, salario_neto]
     );
+
     res.json({
       id_nomina: result.insertId,
       id_empleado,
       fecha,
-      salario_bruto: Number(salario_bruto) || 0,
-      deducciones: Number(deducciones) || 0,
-      salario_neto: Number(salario_neto) || 0
+      salario_bruto,
+      deducciones: Number(deducciones),
+      salario_neto
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -62,19 +71,29 @@ const createPayroll = async (req, res) => {
 
 const updatePayroll = async (req, res) => {
   try {
-    const { id_empleado, fecha, salario_bruto, deducciones, salario_neto } = req.body;
+    const { id_empleado, fecha, deducciones } = req.body;
+
+    // Obtener salario del empleado
+    const [empleadoRows] = await db.query('SELECT salario FROM empleados WHERE id_empleado = ?', [id_empleado]);
+    if (empleadoRows.length === 0) return res.status(404).json({ error: 'Empleado no encontrado' });
+
+    const salario_bruto = Number(empleadoRows[0].salario);
+    const salario_neto = salario_bruto - Number(deducciones || 0);
+
     const [result] = await db.query(
       'UPDATE nominas SET id_empleado = ?, fecha = ?, salario_bruto = ?, deducciones = ?, salario_neto = ? WHERE id_nomina = ? AND estado = 1',
       [id_empleado, fecha, salario_bruto, deducciones, salario_neto, req.params.id]
     );
-    if (result.affectedRows === 0) return res.status(404).json({ error: 'Payroll not found' });
+
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Nómina no encontrada' });
+
     res.json({
       id_nomina: req.params.id,
       id_empleado,
       fecha,
-      salario_bruto: Number(salario_bruto) || 0,
-      deducciones: Number(deducciones) || 0,
-      salario_neto: Number(salario_neto) || 0
+      salario_bruto,
+      deducciones: Number(deducciones),
+      salario_neto
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
