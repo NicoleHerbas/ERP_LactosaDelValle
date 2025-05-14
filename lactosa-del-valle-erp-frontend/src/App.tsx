@@ -1,6 +1,6 @@
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import Home from './pages/Home';
-import Employees from './pages/Employees';
+import RRHH from './pages/RRHH';
 import Production from './pages/Production';
 import Ordenes from './pages/Ordenes';
 import Compras from './pages/Compras';
@@ -9,6 +9,7 @@ import DashboardProduccion from './pages/DashboardProduccion';
 import { useState } from 'react';
 import Inventario from './pages/Inventario';
 import Direccion from './pages/Direccion';
+
 
 function App() {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ function App() {
           <nav>
             <ul className="flex space-x-4 items-center">
               <li><Link to="/" className="hover:underline">Home</Link></li>
-              <li><Link to="/employees" className="hover:underline">Empleados</Link></li>
+              <li><Link to="/rrhh" className="hover:underline">RRHH</Link></li>
               <li><Link to="/direccion" className="hover:underline">Direccion</Link></li>
               {/* ComboBox para Producción */}
               <li>
@@ -55,7 +56,7 @@ function App() {
       <main className="p-6">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/employees" element={<Employees />} />
+          <Route path="/rrhh" element={<RRHH />} />
           <Route path="/inventario" element={<Inventario />} />
           <Route path="/ordenes" element={<Ordenes />} />
           <Route path="/compras" element={<Compras />} />
