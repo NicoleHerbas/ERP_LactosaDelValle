@@ -308,6 +308,7 @@ const Ordenes: React.FC = () => {
             <>
               <p className="text-red-600 mt-4">⚠ No se registró control de calidad para esta orden.</p>
               <div className="mt-4 space-y-2">
+                <p className="text-black-600 mt-4">Teperatura</p>
                 <input
                   type="number"
                   placeholder="Temperatura (°C)"
@@ -315,6 +316,7 @@ const Ordenes: React.FC = () => {
                   value={controlForm.temperatura}
                   onChange={(e) => setControlForm({ ...controlForm, temperatura: parseFloat(e.target.value) || 0 })}
                 />
+                 <p className="text-black-600 mt-4">PH</p>
                 <input
                   type="number"
                   placeholder="pH"
@@ -322,6 +324,7 @@ const Ordenes: React.FC = () => {
                   value={controlForm.ph}
                   onChange={(e) => setControlForm({ ...controlForm, ph: parseFloat(e.target.value) || 0 })}
                 />
+                 <p className="text-black-600 mt-4">Observaciones</p>
                 <textarea
                   placeholder="Observaciones"
                   className="border px-2 py-1 rounded w-full"

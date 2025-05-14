@@ -205,7 +205,6 @@ const AttendanceTab: React.FC<AttendanceTabProps> = ({ employees, attendance, at
         <table className="min-w-full bg-white border border-gray-300">
           <thead>
             <tr className="bg-gray-100">
-              <th className="py-2 px-4 border-b text-left">ID</th>
               <th className="py-2 px-4 border-b text-left">Empleado</th>
               <th className="py-2 px-4 border-b text-left">Fecha</th>
               <th className="py-2 px-4 border-b text-left">Jornada</th>
@@ -223,7 +222,6 @@ const AttendanceTab: React.FC<AttendanceTabProps> = ({ employees, attendance, at
               const dailyTotal = getDailyHours(att.id_empleado, att.fecha);
               return (
                 <tr key={att.id_asistencia} className="hover:bg-gray-50">
-                  <td className="py-2 px-4 border-b">{att.id_asistencia}</td>
                   <td className="py-2 px-4 border-b">{att.nombre} {att.apellido}</td>
                   <td className="py-2 px-4 border-b">{new Date(att.fecha).toLocaleDateString()}</td>
                   <td className="py-2 px-4 border-b">{att.jornada === 1 ? 'Jornada 1' : 'Jornada 2'}</td>
