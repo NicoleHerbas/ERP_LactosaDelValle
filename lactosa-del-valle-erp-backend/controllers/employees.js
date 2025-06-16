@@ -35,7 +35,7 @@ const createEmployee = async (req, res) => {
     res.json({ id_empleado: result.insertId, nombre, apellido, salario: Number(salario) || 0, fecha_contratacion });
   } catch (err) {
     res.status(500).json({ error: err.message });
-  }
+  } 
 };
 
 const updateEmployee = async (req, res) => {

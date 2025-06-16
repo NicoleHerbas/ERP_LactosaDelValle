@@ -1,6 +1,16 @@
 import { Routes, Route, Link } from 'react-router-dom';
 import Home from './pages/Home';
 import RRHH from './pages/RRHH';
+import Production from './pages/Production';
+import Ordenes from './pages/Ordenes';
+import Compras from './pages/Compras';
+import ControlCalidad from './pages/ControlCalidad';
+import DashboardProduccion from './pages/DashboardProduccion';
+import { useState } from 'react';
+import Inventario from './pages/Inventario';
+import Direccion from './pages/Direccion';
+import MarketingVentas from './pages/MarketingVentas';
+
 
 function App() {
   return (
@@ -9,12 +19,41 @@ function App() {
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">Lactosa del Valle ERP</h1>
           <nav>
-            <ul className="flex space-x-4">
+            <ul className="flex space-x-4 items-center">
+              <li><Link to="/" className="hover:underline">Home</Link></li>
+              <li><Link to="/rrhh" className="hover:underline">RRHH</Link></li>
+              <li><Link to="/direccion" className="hover:underline">Direccion</Link></li>
+              <li><Link to="/marketing-ventas" className="hover:underline">Marketing</Link></li>
+
+              {/* ComboBox para Producción */}
               <li>
-                <Link to="/" className="hover:underline">Home</Link>
+                <select
+                  value={productionPath}
+                  onChange={handleProductionChange}
+                  className="text-black px-2 py-1 rounded"
+                >
+                  <option value="">Producción</option>
+                  <option value="/inventario">Inventario</option>
+                  <option value="/ordenes">Órdenes</option>
+                  <option value="/compras">Compras</option>
+                  <option value="/control-calidad">Control Calidad</option>
+                  <option value="/dashboard">Dashboard</option>
+                </select>
               </li>
+
               <li>
-                <Link to="/rrhh" className="hover:underline">RRHH</Link>
+                <select
+                  value={productionPath}
+                  onChange={handleProductionChange}
+                  className="text-black px-2 py-1 rounded"
+                >
+                  <option value="">Finanzas</option>
+                  <option value="/inventario">Inventario</option>
+                  <option value="/ordenes">Órdenes</option>
+                  <option value="/compras">Compras</option>
+                  <option value="/control-calidad">Control Calidad</option>
+                  <option value="/dashboard">Dashboard</option>
+                </select>
               </li>
             </ul>
           </nav>
@@ -24,6 +63,14 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/rrhh" element={<RRHH />} />
+          <Route path="/inventario" element={<Inventario />} />
+          <Route path="/ordenes" element={<Ordenes />} />
+          <Route path="/compras" element={<Compras />} />
+          <Route path="/control-calidad" element={<ControlCalidad />} />
+          <Route path="/dashboard" element={<DashboardProduccion />} />
+          <Route path="/direccion" element={<Direccion />} />
+          <Route path="/marketing-ventas" element={<MarketingVentas />} />
+
         </Routes>
       </main>
     </div>
