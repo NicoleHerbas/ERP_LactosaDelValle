@@ -1,12 +1,17 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./config/db');
+const employeeRoutes = require('./routes/employees');
+const attendanceRoutes = require('./routes/attendance');
+const payrollRoutes = require('./routes/payroll');
+const productionRoutes = require('./routes/production');
+const inventarioRoutes = require('./routes/inventario');
+const direccionRoutes = require('./routes/direccion');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3001;
 
-// ✅ MIDDLEWARE PRIMERO
-app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(cors());
 app.use(express.json());
 
 // 🔽 Importar rutas
@@ -47,10 +52,10 @@ app.use('/api/leads', leadsRoutes);
 
 // Verifica conexión DB
 db.query('SELECT 1')
-  .then(() => console.log('Connected to MySQL database'))
-  .catch(err => console.error('Database connection failed:', err));
+  .then(() => console.log('Conectado a MySQL'))
+  .catch(err => console.error('Fallo en la conexión a la BD:', err));
 
-// Start server
+// Inicia servidor
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Servidor backend corriendo en puerto ${PORT}`);
 });

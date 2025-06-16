@@ -1,4 +1,4 @@
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import Home from './pages/Home';
 import RRHH from './pages/RRHH';
 import Production from './pages/Production';
@@ -13,6 +13,17 @@ import MarketingVentas from './pages/MarketingVentas';
 
 
 function App() {
+  const navigate = useNavigate();
+  const [productionPath, setProductionPath] = useState('');
+
+  const handleProductionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedPath = e.target.value;
+    if (selectedPath !== '') {
+      setProductionPath('');
+      navigate(selectedPath);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-blue-600 text-white p-4">
@@ -59,6 +70,7 @@ function App() {
           </nav>
         </div>
       </header>
+
       <main className="p-6">
         <Routes>
           <Route path="/" element={<Home />} />
