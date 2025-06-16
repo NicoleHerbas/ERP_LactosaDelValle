@@ -1,10 +1,10 @@
 // src/api.ts
 import axios from 'axios';
-
+/* 
 const api = axios.create({
   baseURL: 'http://localhost:5000/api',
 });
-
+ */
 // ==================== Recursos Humanos ====================
 export const fetchEmployees = async () => {
   const res = await api.get('/employees');
@@ -14,7 +14,7 @@ export const fetchEmployees = async () => {
 const api = axios.create({
   baseURL: 'http://localhost:3001/api/produccion',
 });
-
+/* 
 export const crearOrden = (data: { product: string; quantity: number }) =>
   api.post('/orden', data);
 
@@ -22,7 +22,7 @@ export const ejecutarOrden = (data: { product: string; quantity: number }) =>
   api.post('/orden/ejecutar', data);
 
 export const consultarStock = (product: string) =>
-  api.get(`/stock/${product}`);
+  api.get(`/stock/${product}`); */
 
 
 export const fetchAttendance = async () => {

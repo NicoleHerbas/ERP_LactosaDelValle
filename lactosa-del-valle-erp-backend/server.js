@@ -1,12 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./config/db');
-const employeeRoutes = require('./routes/employees');
-const attendanceRoutes = require('./routes/attendance');
-const payrollRoutes = require('./routes/payroll');
-const productionRoutes = require('./routes/production');
-const inventarioRoutes = require('./routes/inventario');
-const direccionRoutes = require('./routes/direccion');
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;
