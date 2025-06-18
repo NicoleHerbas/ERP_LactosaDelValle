@@ -19,6 +19,14 @@ const direccionRoutes = require('./routes/direccion');
 const cotizacionesRoutes = require('./routes/cotizaciones');
 const leadsRoutes = require('./routes/leads');
 const campaniasRoutes = require('./routes/campanias');
+const ventasRoutes = require('./routes/ventas'); // ⬅️ Nuevo
+const clientesRoutes = require('./routes/clientes');
+
+// Justo después de los otros app.use()
+app.use('/api/clientes1', clientesRoutes);
+
+app.use('/api/ventas', ventasRoutes); // ⬅️ Nuevo
+
 app.use('/api/cotizaciones', cotizacionesRoutes);
 
 app.use('/api/campanias', campaniasRoutes);

@@ -12,7 +12,7 @@ export const fetchEmployees = async () => {
 };
 
 const api = axios.create({
-  baseURL: 'http://localhost:3001/api/produccion',
+  baseURL: 'http://localhost:5000/api',
 });
 /* 
 export const crearOrden = (data: { product: string; quantity: number }) =>
@@ -64,13 +64,13 @@ export const eliminarCampania = async (id: number) => {
 
 // ==================== Producción ====================
 export const crearOrden = (data: { product: string; quantity: number }) =>
-  axios.post('http://localhost:3001/api/produccion/orden', data);
+  axios.post('http://localhost:5000/api/produccion/orden', data);
 
 export const ejecutarOrden = (data: { product: string; quantity: number }) =>
-  axios.post('http://localhost:3001/api/produccion/orden/ejecutar', data);
+  axios.post('http://localhost:5000/api/produccion/orden/ejecutar', data);
 
 export const consultarStock = (product: string) =>
-  axios.get(`http://localhost:3001/api/produccion/stock/${product}`);
+  axios.get(`http://localhost:5000/api/produccion/stock/${product}`);
 
 // ==================== Cotizaciones ====================
 const COTIZACIONES_URL = '/cotizaciones';
@@ -92,5 +92,44 @@ export const convertirCotizacionEnVenta = async (id: number) => {
 
 export const fetchProductos = async () => {
   const res = await api.get(`${COTIZACIONES_URL}/productos`);
+  return res.data;
+};
+export const crearVentaDirecta = async (venta: any) => {
+  const res = await axios.post('http://localhost:5000/api/ventas/directa', venta);
+  return res.data;
+};
+
+// Clientes API
+export const fetchClientesPanel = async () => {
+  const res = await fetch('http://localhost:5000/api/clientes1');
+  return await res.json();
+};
+
+export const crearCliente = async (data: any) => {
+  const res = await fetch('http://localhost:5000/api/clientes1', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return await res.json();
+};
+
+export const actualizarCliente = async (id: number, data: any) => {
+  const res = await fetch(`http://localhost:5000/api/clientes1/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return await res.json();
+};
+
+export const eliminarCliente = async (id: number) => {
+  const res = await fetch(`http://localhost:5000/api/clientes1/${id}`, {
+    method: 'DELETE',
+  });
+  return await res.json();
+};
+export const fetchHistorialPorCliente = async (id_cliente: number) => {
+  const res = await axios.get(`http://localhost:5000/api/clientes1/${id_cliente}/historial`);
   return res.data;
 };

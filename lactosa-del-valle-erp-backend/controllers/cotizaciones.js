@@ -17,6 +17,40 @@ exports.getCotizaciones = async (req, res) => {
     res.status(500).json({ error: 'Error interno' });
   }
 };
+// Obtener el detalle de una cotización por ID
+exports.getDetalleCotizacion = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const [cotizacion] = await db.query(`
+      SELECT c.id_cotizacion, c.fecha_cotizacion, c.monto_total, c.estado,
+             IFNULL(cli.nombre, l.nombre) AS nombre_cliente
+      FROM cotizaciones c
+      LEFT JOIN clientes cli ON c.id_cliente = cli.id_cliente
+      LEFT JOIN leads l ON c.id_cliente = l.id_cliente
+      WHERE c.id_cotizacion = ?
+    `, [id]);
+
+    if (cotizacion.length === 0) {
+      return res.status(404).json({ error: 'Cotización no encontrada' });
+    }
+
+    const [productos] = await db.query(`
+      SELECT dc.id_producto, p.nombre, dc.cantidad, dc.precio_unitario
+      FROM detallecotizacion dc
+      JOIN productos p ON p.id_producto = dc.id_producto
+      WHERE dc.id_cotizacion = ?
+    `, [id]);
+
+    res.json({
+      ...cotizacion[0],
+      productos
+    });
+  } catch (err) {
+    console.error('Error al obtener detalle de cotización:', err);
+    res.status(500).json({ error: 'Error interno' });
+  }
+};
 
 // Crear una nueva cotización
 exports.createCotizacion = async (req, res) => {

@@ -6,6 +6,7 @@ import CotizacionesTab from './components/CotizacionesTab';
 //import SeguimientoPostventaTab from './components/SeguimientoPostventaTab';
 import CampañasTab from './components/CampaniasTab';
 import LeadsTab from './components/LeadsTab';
+import ClientesTab from './components/ClientesTab';
 import DashboardMarketingTab from './components/DashboardMarketingTab';
 
 const MarketingVentas: React.FC = () => {
@@ -29,6 +30,7 @@ const MarketingVentas: React.FC = () => {
           {/* <Tab className="cursor-pointer py-2 px-4 hover:bg-gray-200">Seguimiento</Tab> */}
           <Tab className="cursor-pointer py-2 px-4 hover:bg-gray-200">Campañas</Tab>
           <Tab className="cursor-pointer py-2 px-4 hover:bg-gray-200">Leads</Tab>
+          <Tab className="cursor-pointer py-2 px-4 hover:bg-gray-200">Clientes</Tab>
           <Tab className="cursor-pointer py-2 px-4 hover:bg-gray-200">Dashboard Marketing</Tab>
         </TabList>
 
@@ -43,6 +45,9 @@ const MarketingVentas: React.FC = () => {
         </TabPanel>
         <TabPanel>
           <LeadsTab />
+        </TabPanel>
+          <TabPanel>
+          <ClientesTab />
         </TabPanel>
         <TabPanel>
     <DashboardMarketingTab />

@@ -3,10 +3,9 @@ const db = require('../config/db');
 exports.getLeads = async (req, res) => {
   try {
     const [rows] = await db.execute(
-      `SELECT l.id_lead, l.nombre, l.correo, l.telefono, l.fuente, l.estado, c.nombre AS campaña 
-       FROM leads l
-       LEFT JOIN campanias_marketing c ON l.id_campania = c.id_campania
-       WHERE l.estado != 'eliminado'`
+      `SELECT id_lead, nombre, correo, telefono, fuente, estado
+       FROM leads
+       WHERE estado != 'eliminado'`
     );
     res.json(rows);
   } catch (error) {
@@ -25,13 +24,13 @@ exports.getLeadById = async (req, res) => {
 };
 
 exports.createLead = async (req, res) => {
-  const { nombre, correo, telefono, fuente, id_campania, estado } = req.body;
+  const { nombre, correo, telefono, fuente, estado } = req.body;
   try {
     const [result] = await db.execute(
-      'INSERT INTO leads (nombre, correo, telefono, fuente, id_campania, estado) VALUES (?, ?, ?, ?, ?, ?)',
-      [nombre, correo, telefono, fuente, id_campania, estado || 'nuevo']
+      'INSERT INTO leads (nombre, correo, telefono, fuente, estado) VALUES (?, ?, ?, ?, ?)',
+      [nombre, correo, telefono, fuente, estado || 'nuevo']
     );
-    res.json({ id_lead: result.insertId, nombre, correo, telefono, fuente, id_campania, estado: estado || 'nuevo' });
+    res.json({ id_lead: result.insertId, nombre, correo, telefono, fuente, estado: estado || 'nuevo' });
   } catch (error) {
     res.status(500).json({ error: 'Error al crear el lead' });
   }
@@ -39,12 +38,12 @@ exports.createLead = async (req, res) => {
 
 exports.updateLead = async (req, res) => {
   const id = req.params.id;
-  const { nombre, correo, telefono, fuente, id_campania } = req.body;
+  const { nombre, correo, telefono, fuente } = req.body;
 
   try {
     const [result] = await db.query(
-      'UPDATE leads SET nombre = ?, correo = ?, telefono = ?, fuente = ?, id_campania = ? WHERE id_lead = ?',
-      [nombre, correo, telefono, fuente, id_campania, id]
+      'UPDATE leads SET nombre = ?, correo = ?, telefono = ?, fuente = ? WHERE id_lead = ?',
+      [nombre, correo, telefono, fuente, id]
     );
 
     if (result.affectedRows === 0) {
@@ -57,7 +56,6 @@ exports.updateLead = async (req, res) => {
     res.status(500).json({ error: 'Error al actualizar lead' });
   }
 };
-
 
 exports.deleteLead = async (req, res) => {
   try {

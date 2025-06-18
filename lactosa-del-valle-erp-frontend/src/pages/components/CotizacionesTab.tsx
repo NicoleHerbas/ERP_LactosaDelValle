@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { fetchLeads, fetchClientes, fetchProductos } from '../../services/api';
+import {
+  fetchLeads,
+  fetchClientes,
+  fetchProductos,
+  fetchCotizaciones,
+  crearCotizacion,
+  crearVentaDirecta
+} from '../../services/api';
+import ModalCotizacion from '../components/ModalCotizacion';
 
 interface Producto {
   id_producto: number;
@@ -14,53 +22,19 @@ interface ProductoCotizado {
   precio_unitario: number;
 }
 
-interface Cotizacion {
-  id: number;
-  tipo_cliente: 'lead' | 'cliente';
-  nombre_cliente: string;
-  productos: ProductoCotizado[];
-  total: number;
-  fecha: string;
-  estado: string;
-}
-
 const CotizacionesTab: React.FC = () => {
   const [productosDisponibles, setProductosDisponibles] = useState<Producto[]>([]);
   const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
   const [cantidad, setCantidad] = useState<number>(1);
   const [productos, setProductos] = useState<ProductoCotizado[]>([]);
   const [tipoCliente, setTipoCliente] = useState<'lead' | 'cliente'>('lead');
+  const [tipoOperacion, setTipoOperacion] = useState<'cotizacion' | 'venta'>('cotizacion');
   const [leads, setLeads] = useState<any[]>([]);
   const [clientes, setClientes] = useState<any[]>([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState('');
-  const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
-
-  // Cotizaciones simuladas por defecto
-  const cotizacionesIniciales: Cotizacion[] = [
-    {
-      id: 1,
-      tipo_cliente: 'cliente',
-      nombre_cliente: 'Supermercado 1',
-      productos: [
-        { id_producto: 1, nombre: 'Leche Entera', cantidad: 10, precio_unitario: 4.5 },
-        { id_producto: 2, nombre: 'Yogurt Natural', cantidad: 5, precio_unitario: 3.8 },
-      ],
-      total: 65.5,
-      fecha: '2024-05-28',
-      estado: 'pendiente',
-    },
-    {
-      id: 2,
-      tipo_cliente: 'lead',
-      nombre_cliente: 'Juan Pérez',
-      productos: [
-        { id_producto: 3, nombre: 'Queso Fresco', cantidad: 3, precio_unitario: 8.9 },
-      ],
-      total: 26.7,
-      fecha: '2024-05-29',
-      estado: 'pendiente',
-    }
-  ];
+  const [cotizaciones, setCotizaciones] = useState<any[]>([]);
+  const [editandoId, setEditandoId] = useState<number | null>(null);
+  const [detalleSeleccionado, setDetalleSeleccionado] = useState<any | null>(null);
 
   useEffect(() => {
     fetchLeads().then(setLeads);
@@ -71,14 +45,7 @@ const CotizacionesTab: React.FC = () => {
         precio: typeof p.precio === 'string' ? parseFloat(p.precio) : p.precio
       })))
     );
-
-    const almacenadas = localStorage.getItem('cotizaciones');
-    if (almacenadas) {
-      setCotizaciones(JSON.parse(almacenadas));
-    } else {
-      setCotizaciones(cotizacionesIniciales);
-      localStorage.setItem('cotizaciones', JSON.stringify(cotizacionesIniciales));
-    }
+    fetchCotizaciones().then(setCotizaciones);
   }, []);
 
   const agregarProducto = () => {
@@ -101,28 +68,93 @@ const CotizacionesTab: React.FC = () => {
     return productos.reduce((sum, p) => sum + (p.cantidad * p.precio_unitario), 0);
   };
 
-  const handleCrearCotizacion = () => {
-    const nuevaCotizacion: Cotizacion = {
-      id: cotizaciones.length + 1,
-      tipo_cliente: tipoCliente,
-      nombre_cliente: clienteSeleccionado,
+  const handleVerDetalle = async (id: number) => {
+    const res = await fetch(`http://localhost:5000/api/cotizaciones/${id}`);
+    const detalle = await res.json();
+    setDetalleSeleccionado(detalle);
+  };
+
+  const convertirEnVenta = async () => {
+    if (!detalleSeleccionado) return;
+    const confirm = window.confirm('¿Deseas convertir esta cotización en venta?');
+    if (!confirm) return;
+
+    const res = await fetch(`http://localhost:5000/api/cotizaciones/${detalleSeleccionado.id_cotizacion}/convertir-a-venta`, {
+      method: 'POST'
+    });
+
+    if (res.ok) {
+      alert('Cotización convertida en venta');
+      setDetalleSeleccionado(null);
+      fetchCotizaciones().then(setCotizaciones);
+    } else {
+      alert('Error al convertir. Ver consola');
+      console.error(await res.text());
+    }
+  };
+
+  const handleGuardarOperacion = async () => {
+    const lista = tipoCliente === 'lead' ? leads : clientes;
+    const entidad = lista.find(c => (c.id_cliente || c.id) === parseInt(clienteSeleccionado));
+    if (!entidad) return alert('Debe seleccionar un cliente válido');
+
+    const id_cliente = entidad.id_cliente || entidad.id;
+
+    const data = {
+      id_cliente,
       productos,
-      total: calcularTotal(),
-      fecha: new Date().toISOString().split('T')[0],
-      estado: 'pendiente'
+      fecha_cotizacion: new Date().toISOString().split('T')[0],
+      ...(editandoId && { id_cotizacion: editandoId })
     };
 
-    const actualizadas = [...cotizaciones, nuevaCotizacion];
-    setCotizaciones(actualizadas);
-    localStorage.setItem('cotizaciones', JSON.stringify(actualizadas));
+    try {
+      if (tipoOperacion === 'cotizacion') {
+        await crearCotizacion(data);
+        alert(editandoId ? 'Cotización actualizada' : 'Cotización registrada');
+      } else {
+        await crearVentaDirecta(data);
+        alert('Venta directa registrada');
+      }
+      setProductos([]);
+      setClienteSeleccionado('');
+      setEditandoId(null);
+      fetchCotizaciones().then(setCotizaciones);
+    } catch (err) {
+      alert('Error al guardar operación. Revisa consola.');
+      console.error(err);
+    }
+  };
 
-    setProductos([]);
-    setClienteSeleccionado('');
+  const handleEliminarCotizacion = async (id: number) => {
+    const confirm = window.confirm(`¿Seguro que deseas eliminar la cotización ${id}?`);
+    if (!confirm) return;
+
+    try {
+      await fetch(`/api/cotizaciones/${id}`, { method: 'DELETE' });
+      alert('Cotización eliminada');
+      fetchCotizaciones().then(setCotizaciones);
+    } catch (err) {
+      alert('Error al eliminar. Revisa consola');
+      console.error(err);
+    }
+  };
+
+  const handleEditar = (c: any) => {
+    setEditandoId(c.id_cotizacion);
+    setClienteSeleccionado(c.id_cliente.toString());
+    setTipoCliente(c.tipo_cliente);
+    setTipoOperacion('cotizacion');
+    setProductos(c.productos || []);
   };
 
   return (
     <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">Registrar Cotización</h2>
+      <h2 className="text-xl font-bold mb-4">{editandoId ? 'Editar Cotización' : `Registrar ${tipoOperacion === 'cotizacion' ? 'Cotización' : 'Venta directa'}`}</h2>
+
+      <div className="flex gap-4 mb-4">
+        <label><input type="radio" value="cotizacion" checked={tipoOperacion === 'cotizacion'} onChange={() => setTipoOperacion('cotizacion')} /> Cotización</label>
+        <label><input type="radio" value="venta" checked={tipoOperacion === 'venta'} onChange={() => setTipoOperacion('venta')} /> Venta directa</label>
+      </div>
 
       <div className="flex gap-4 items-center mb-4">
         <label>
@@ -139,7 +171,7 @@ const CotizacionesTab: React.FC = () => {
         >
           <option value="">Seleccione</option>
           {(tipoCliente === 'lead' ? leads : clientes).map((c) => (
-            <option key={c.id_cliente || c.id} value={c.nombre}>
+            <option key={`op-${tipoCliente}-${c.id || c.id_cliente || Math.random()}`} value={c.id_cliente || c.id}>
               {c.nombre}
             </option>
           ))}
@@ -159,7 +191,7 @@ const CotizacionesTab: React.FC = () => {
         >
           <option value="">Seleccione producto</option>
           {productosDisponibles.map((p) => (
-            <option key={p.id_producto} value={p.id_producto}>
+            <option key={`prod-${p.id_producto}`} value={p.id_producto}>
               {p.nombre} - Bs {parseFloat(p.precio as any).toFixed(2)}
             </option>
           ))}
@@ -179,64 +211,93 @@ const CotizacionesTab: React.FC = () => {
         </button>
       </div>
 
-      {productos.length > 0 ? (
-        <table className="w-full mb-4">
-          <thead>
-            <tr className="bg-gray-200">
-              <th>Producto</th>
-              <th>Cantidad</th>
-              <th>Precio Unitario</th>
-              <th>Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            {productos.map((p, i) => (
-              <tr key={i}>
-                <td>{p.nombre}</td>
-                <td>{p.cantidad}</td>
-                <td>{p.precio_unitario.toFixed(2)}</td>
-                <td>{(p.cantidad * p.precio_unitario).toFixed(2)}</td>
+      {productos.length > 0 && (
+        <>
+          <table className="w-full mb-4 text-sm">
+            <thead>
+              <tr className="bg-gray-200">
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Subtotal</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <div className="text-gray-500 italic mb-4">No hay productos agregados.</div>
-      )}
+            </thead>
+            <tbody>
+              {productos.map((p, i) => (
+                <tr key={i}>
+                  <td>{p.nombre}</td>
+                  <td>{p.cantidad}</td>
+                  <td>{p.precio_unitario.toFixed(2)}</td>
+                  <td>{(p.cantidad * p.precio_unitario).toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-      <div className="font-bold mb-4">Total: Bs {calcularTotal().toFixed(2)}</div>
+          <div className="font-bold mb-4">Total: Bs {calcularTotal().toFixed(2)}</div>
+        </>
+      )}
 
       <button
         className="bg-blue-600 text-white px-4 py-2"
-        onClick={handleCrearCotizacion}
+        onClick={handleGuardarOperacion}
         disabled={productos.length === 0 || !clienteSeleccionado}
       >
-        Guardar Cotización
+        {editandoId ? 'Actualizar Cotización' : `Guardar ${tipoOperacion === 'cotizacion' ? 'Cotización' : 'Venta'}`}
       </button>
 
       <h2 className="text-xl font-bold mt-8 mb-4">Cotizaciones Registradas</h2>
-      <table className="w-full text-sm">
+      <table className="w-full text-sm border">
         <thead>
           <tr className="bg-gray-100">
-            <th>Cliente</th>
-            <th>Tipo</th>
-            <th>Total</th>
-            <th>Fecha</th>
-            <th>Estado</th>
+            <th className="border px-2 py-1">ID</th>
+            <th className="border px-2 py-1">Cliente</th>
+            <th className="border px-2 py-1">Total</th>
+            <th className="border px-2 py-1">Fecha</th>
+            <th className="border px-2 py-1">Estado</th>
+            <th className="border px-2 py-1">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {cotizaciones.map((c, i) => (
-            <tr key={i} className="border-t">
-              <td>{c.nombre_cliente}</td>
-              <td>{c.tipo_cliente}</td>
-              <td>Bs {c.total.toFixed(2)}</td>
-              <td>{c.fecha}</td>
-              <td>{c.estado}</td>
+          {cotizaciones.map((c) => (
+            <tr key={`cot-${c.id_cotizacion}`} className="hover:bg-gray-50">
+              <td className="border px-2 py-1">{c.id_cotizacion}</td>
+              <td className="border px-2 py-1">{c.nombre_cliente}</td>
+              <td className="border px-2 py-1">Bs {parseFloat(c.monto_total || '0').toFixed(2)}</td>
+              <td className="border px-2 py-1">{c.fecha_cotizacion}</td>
+              <td className="border px-2 py-1">{c.estado}</td>
+              <td className="border px-2 py-1 text-center">
+                <button
+                  onClick={() => handleVerDetalle(c.id_cotizacion)}
+                  className="text-blue-600 hover:underline mr-2"
+                >
+                  Ver
+                </button>
+                <button
+                  onClick={() => handleEditar(c)}
+                  className="text-yellow-600 hover:underline mr-2"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => handleEliminarCotizacion(c.id_cotizacion)}
+                  className="text-red-600 hover:underline"
+                >
+                  Eliminar
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {detalleSeleccionado && (
+        <ModalCotizacion
+          detalle={detalleSeleccionado}
+          onClose={() => setDetalleSeleccionado(null)}
+          onConvertirVenta={convertirEnVenta}
+        />
+      )}
     </div>
   );
 };

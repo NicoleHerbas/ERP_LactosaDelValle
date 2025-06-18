@@ -13,5 +13,6 @@ router.post('/:id/convertir-a-venta', cotizacionesController.venderCotizacion);
 
 // Obtener productos disponibles
 router.get('/productos', cotizacionesController.getProductos);
+router.get('/:id', cotizacionesController.getDetalleCotizacion);
 
 module.exports = router;
